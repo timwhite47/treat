@@ -33,7 +33,7 @@ class Treat::Workers::Formatters::Unserializers::Mongo
       "selector #{selector.inspect}."
     end
     
-    if entity.type == :document 
+    if entity.type != :collection
       if records.size == 1
         self.do_unserialize(
         records.first, options)
