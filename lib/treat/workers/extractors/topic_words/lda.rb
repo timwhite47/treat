@@ -1,4 +1,4 @@
-# Topic word retrieval using a thin wrapper over a 
+# Topic word retrieval using a thin wrapper over a
 # C implementation of Latent Dirichlet Allocation (LDA),
 # a statistical model that posits each document 
 # is a mixture of a small number of topics and that 
@@ -20,11 +20,13 @@ class Treat::Workers::Extractors::TopicWords::LDA
     silence_warnings { undef :initialize }
     # Redefine initialize to take in an 
     # array of sections.
-    def initialize(sections)
-      super(nil)
+    def initialize(sections, stopword_list=nil)
+      super(stopword_list)
+
       sections.each do |section|
         add_document(
-        Lda::TextDocument.new(self, section))
+          Lda::TextDocument.new(self, section)
+        )
       end
     end
   end
@@ -39,12 +41,19 @@ class Treat::Workers::Extractors::TopicWords::LDA
   
   # Retrieve the topic words of a collection.
   def self.topic_words(collection, options = {})
-
     options = DefaultOptions.merge(options)
-    
+    if options.delete(:stopwords)
+      stopwords = Tempfile.new('stopwords')
+      stopwords.puts stopwords.to_yaml
+      stopwords.flush
+      options[:stopwords] = stopwords.path
+    end
+
+
+
     docs = collection.documents.map { |d| d.to_s }
     # Create a corpus with the collection
-    corpus = Lda::TextCorpus.new(docs)
+    corpus = Lda::TextCorpus.new(docs, options[:stopwords])
     
     # Create an Lda object for training
     lda = Lda::Lda.new(corpus)
@@ -53,8 +62,6 @@ class Treat::Workers::Extractors::TopicWords::LDA
     # Run the EM algorithm using random 
     # starting points
     
-    Treat.core.verbosity.silence ?
-    silence_stdout { lda.em('random') }  :
     lda.em('random')
     
     # Load the vocabulary.
