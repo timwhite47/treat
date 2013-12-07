@@ -42,16 +42,17 @@ class Treat::Workers::Extractors::TopicWords::LDA
   # Retrieve the topic words of a collection.
   def self.topic_words(collection, options = {})
     options = DefaultOptions.merge(options)
-    if list = options.delete(:stopwords)
+    if options.delete(:stopwords)
       stopwords = Tempfile.new('stopwords')
-      stopwords.puts list.to_yaml
+      stopwords.puts stopwords.to_yaml
       stopwords.flush
       options[:stopwords] = stopwords.path
     end
 
+
+
     docs = collection.documents.map { |d| d.to_s }
     # Create a corpus with the collection
-    binding.pry
     corpus = Lda::TextCorpus.new(docs, options[:stopwords])
     
     # Create an Lda object for training
